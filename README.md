@@ -16,6 +16,12 @@ The embedding column is an `ARRAY<FLOAT>` which the Neo4j Spark Connector writes
 df.filter(col("embedding").isNotNull() & (size(col("embedding")) == 384))
 ```
 
+Then simply write to Neo4j using the Spark Connector—no additional transformation needed:
+
+```python
+df.write.format("org.neo4j.spark.DataSource").option("labels", ":MyNode").save()
+```
+
 ## Prerequisites
 
 - Databricks workspace with Unity Catalog
@@ -57,29 +63,35 @@ Run `model_setup.py` to register the MiniLM embedding model in Unity Catalog, th
 
 ## 6. Test Neo4j Connectivity (Random Embeddings)
 
-Run `neo4j_load_test.py` or `neo4j_load_test_nb.ipynb` to validate Neo4j connectivity and measure baseline write throughput using randomly generated embeddings. This isolates Neo4j performance from embedding model latency.
+Before testing with real embeddings, verify that your Neo4j connection works and establish a baseline for write performance. This test generates random float arrays instead of calling an embedding model, which lets you measure pure Neo4j throughput without API latency.
+
+Run `neo4j_load_test.py` or `neo4j_load_test_nb.ipynb`. The script reads from your Delta table, generates fake 384-dimensional embeddings, and writes nodes to Neo4j. If this fails, check your Neo4j credentials and network connectivity before proceeding.
 
 ```python
 from neo4j_load_test import main
 main()  # Uses random embeddings, no model calls
 ```
 
-**Typical results:** 2,000-5,000 rows/second (Neo4j write speed without embedding overhead)
+**Typical results:** 2,000-5,000 rows/second. This is your ceiling—real embeddings will be slower due to model inference time.
 
 ## 7. Test Custom Model Embeddings
 
-Run `custom_embeddings_load_test.py` or `custom_embeddings_load_test_nb.ipynb` to test your deployed MiniLM model (384 dimensions) and write embeddings to Neo4j.
+Now test with your deployed MiniLM embedding model. This validates that your Model Serving endpoint is working correctly and measures end-to-end throughput including embedding generation.
+
+Run `custom_embeddings_load_test.py` or `custom_embeddings_load_test_nb.ipynb`. The script calls your custom endpoint (e.g., `minilm-embedder`) to generate 384-dimensional embeddings for each row, then writes the results to Neo4j with a `:RemovalEvent` label. The difference between this throughput and Step 6 shows how much time embedding generation adds.
 
 ```python
 from custom_embeddings_load_test import main
 main()  # Calls your custom model endpoint
 ```
 
-**Typical results:** 200-500 rows/second (includes embedding generation time)
+**Typical results:** 200-500 rows/second. The gap from Step 6 is your embedding model overhead.
 
 ## 8. Test Databricks Hosted Embeddings
 
-Run `dbx_embeddings_load_test.py` or `dbx_embeddings_load_test_nb.ipynb` to use Databricks Foundation Model APIs (`databricks-bge-large-en`, 1024 dimensions).
+Alternatively, use Databricks Foundation Model APIs instead of deploying your own model. These pre-hosted models (`databricks-bge-large-en`, `databricks-gte-large-en`) require no deployment and produce 1024-dimensional embeddings.
+
+Run `dbx_embeddings_load_test.py` or `dbx_embeddings_load_test_nb.ipynb`. This creates nodes with a `:RemovalEventDBX` label to keep results separate from the custom model test. Hosted models are convenient but produce larger embeddings (1024 vs 384 dimensions), which affects storage and search performance.
 
 ```python
 from dbx_embeddings_load_test import main
