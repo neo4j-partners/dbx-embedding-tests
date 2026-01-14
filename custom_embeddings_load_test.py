@@ -131,7 +131,7 @@ from streaming_pipeline import (
 # =============================================================================
 
 # Databricks secret scope containing Neo4j credentials
-SCOPE_NAME = "rk-airline-neo4j-secrets"
+SCOPE_NAME = "airline-neo4j-secrets"
 
 # Default values
 DEFAULT_DATABASE = "neo4j"
