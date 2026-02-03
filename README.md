@@ -2,6 +2,41 @@
 
 This project generates vector embeddings in Databricks and loads them into Neo4j.
 
+## Project Overview
+
+### Notebooks
+
+| Notebook | Purpose |
+|----------|---------|
+| `neo4j_load_test_nb.ipynb` | Test Neo4j connectivity and write performance using random embeddings |
+| `custom_embeddings_load_test_nb.ipynb` | Test with your custom MiniLM model deployed to Model Serving |
+| `dbx_embeddings_load_test_nb.ipynb` | Test with Databricks hosted foundation models (BGE, GTE) |
+
+### Python Scripts
+
+**Load Tests** - Standalone versions of the notebooks:
+| Script | Purpose |
+|--------|---------|
+| `neo4j_load_test.py` | Baseline Neo4j write performance with random 384-dim embeddings |
+| `custom_embeddings_load_test.py` | End-to-end test with custom model endpoint |
+| `dbx_embeddings_load_test.py` | End-to-end test with Databricks hosted models |
+
+**Utility Modules** - Shared functionality:
+| Module | Purpose |
+|--------|---------|
+| `embedding_providers.py` | Abstraction for embedding generation (random, custom model, hosted model) |
+| `streaming_pipeline.py` | Structured Streaming pipeline with `foreachBatch` for Neo4j writes |
+| `neo4j_connection.py` | Neo4j driver wrapper with session/transaction management |
+| `neo4j_schema.py` | Schema setup: uniqueness constraints and vector indexes |
+| `load_utils.py` | Configuration, secrets loading, connection testing utilities |
+
+**Setup**:
+| Script | Purpose |
+|--------|---------|
+| `model_setup.py` | Register MiniLM embedding model in Unity Catalog |
+
+---
+
 ## How Embeddings Work in This Pipeline
 
 The pipeline uses Databricks' `ai_query()` function to generate embeddings directly in Spark SQL. This calls your Model Serving endpoint and returns an array of floats that stores directly in Neo4j:
