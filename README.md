@@ -35,6 +35,20 @@ This project generates vector embeddings in Databricks and loads them into Neo4j
 |--------|---------|
 | `model_setup.py` | Register MiniLM embedding model in Unity Catalog |
 
+## Quick Start
+
+1. **Configure Neo4j secrets** - Copy `.env.sample` to `.env`, add your Neo4j credentials, then run:
+   ```bash
+   databricks auth login
+   ./setup_secrets.sh
+   ```
+
+2. **Upload files to Databricks** - Upload all `.py` and `.ipynb` files to your Databricks workspace.
+
+3. **Run `model_setup.py`** - Execute this script first in Databricks to register the MiniLM embedding model in Unity Catalog. Then create a Model Serving endpoint named `minilm-embedder` via the Databricks UI.
+
+4. **Run the notebooks** - Start with `neo4j_load_test_nb.ipynb` to verify Neo4j connectivity, then proceed to the embedding notebooks.
+
 ---
 
 ## How Embeddings Work in This Pipeline
