@@ -43,11 +43,36 @@ This project generates vector embeddings in Databricks and loads them into Neo4j
    ./setup_secrets.sh
    ```
 
-2. **Upload files to Databricks** - Upload all `.py` and `.ipynb` files to your Databricks workspace.
+2. **Create Unity Catalog resources** - Run the following SQL in a Databricks notebook or SQL editor:
+   ```sql
+   -- Catalog for the project
+   CREATE CATALOG IF NOT EXISTS airline_test;
 
-3. **Run `model_setup.py`** - Execute this script first in Databricks to register the MiniLM embedding model in Unity Catalog. Then create a Model Serving endpoint named `minilm-embedder` via the Databricks UI.
+   -- Schema for ML models (used by model_setup.py)
+   CREATE SCHEMA IF NOT EXISTS airline_test.ml;
 
-4. **Run the notebooks** - Start with `neo4j_load_test_nb.ipynb` to verify Neo4j connectivity, then proceed to the embedding notebooks.
+   -- Schema for source data (update notebook configs if using a different location)
+   CREATE SCHEMA IF NOT EXISTS airline_test.airline_test_lakehouse;
+   ```
+
+3. **Generate and load the test dataset** - Clone the demo repo and generate the removal events data:
+   ```bash
+   git clone https://github.com/neo4j-field/databricks-neo4j-mcp-demo.git
+   cd databricks-neo4j-mcp-demo/aircraft_digital_twin_data
+   python3 generate_removal_data.py
+   ```
+   This creates `nodes_removals_large.csv` (~113MB, 500K records). Upload it to a Databricks volume, then create the Delta table:
+   ```sql
+   CREATE TABLE airline_test.airline_test_lakehouse.nodes_removals_large AS
+   SELECT * FROM csv.`/Volumes/airline_test/default/data/nodes_removals_large.csv`
+   OPTIONS (header = 'true', inferSchema = 'true');
+   ```
+
+4. **Upload files to Databricks** - Upload all `.py` and `.ipynb` files to your Databricks workspace.
+
+5. **Run `model_setup.py`** - Execute this script first in Databricks to register the MiniLM embedding model in Unity Catalog. Then create a Model Serving endpoint via the Databricks UI.
+
+6. **Run the notebooks** - Start with `neo4j_load_test_nb.ipynb` to verify Neo4j connectivity, then proceed to the embedding notebooks. Update `EMBEDDING_ENDPOINT` in each notebook to match your endpoint name.
 
 ---
 

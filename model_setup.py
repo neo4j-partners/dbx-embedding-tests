@@ -171,9 +171,17 @@ class MiniLMPyfunc(PythonModel):
         Args:
             context: MLflow context (contains artifacts path, etc.)
         """
+        import os
+        os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
         from sentence_transformers import SentenceTransformer
 
-        self.model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+        self.model = SentenceTransformer(
+            "sentence-transformers/all-MiniLM-L6-v2",
+            device="cpu",
+        )
+        # Disable progress bars to avoid isatty() issues on older runtimes
+        self.model.show_progress_bar = False
 
     def predict(self, context, model_input) -> list:
         """Generate embeddings for input texts.
